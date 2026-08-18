@@ -1,1 +1,68 @@
-Nothing should be ignored in this case, as the only added file is an HTML file which appears to be a source/config file rather than a build artifact or temporary file.
+```
+# OS build artifacts
+boot.bin
+kernel.bin
+*.iso
+*.img
+
+# Build directories
+build/
+dist/
+
+# Temporary files
+*.tmp
+*.log
+
+# Editor/IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.local
+*.env.*
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# MyPy cache
+.mypy_cache/
+.pytest_cache/
+
+# Julia packages (if applicable)
+julia-*/
+
+# Zig build (if applicable)  
+zig-cache/
+zig-out/
+
+# Gradle
+.gradle/
+build/
+
+# Rust
+target/
+
+# Node
+node_modules/
+
+# Virtual environments
+venv/
+.venv/
+```
