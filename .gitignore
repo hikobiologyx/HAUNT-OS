@@ -1,8 +1,7 @@
 ```
-# OS build artifacts
+# OS build artifacts (except final ISO)
 boot.bin
 kernel.bin
-*.iso
 *.img
 
 # Build directories
