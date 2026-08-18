@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAUNT OS v1.0</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --term-bg: #0a0a0a;
+            --primary: #b026ff; /* Neon Purple */
+            --secondary: #00ff9d; /* Neon Green */
+            --text: #e0e0e0;
+            --dim: #666;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        * { box-sizing: border-box; user-select: none; }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text);
+            font-family: var(--font-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* --- Boot Screen --- */
+        #boot-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .boot-logo {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary);
+            margin-bottom: 20px;
+            animation: flicker 2s infinite;
+        }
+
+        .boot-log {
+            font-size: 0.9rem;
+            color: var(--secondary);
+            max-height: 200px;
+            overflow: hidden;
+            text-align: left;
+            width: 600px;
+        }
+
+        /* --- Desktop Environment --- */
+        #desktop {
+            display: none;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+            position: relative;
+        }
+
+        /* Top Bar */
+        #top-bar {
+            height: 30px;
+            background: rgba(20, 20, 20, 0.9);
+            border-bottom: 1px solid var(--dim);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            font-size: 0.8rem;
+        }
+
+        .clock { color: var(--secondary); }
+        .user-info { color: var(--primary); }
+
+        /* Icons Grid */
+        #icons-area {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex-wrap: wrap;
+            height: calc(100% - 80px);
+            align-content: flex-start;
+        }
+
+        .desktop-icon {
+            width: 80px;
+            text-align: center;
+            cursor: pointer;
+            padding: 10px;
+            border: 1px solid transparent;
+            border-radius: 5px;
+            transition: 0.2s;
+        }
+
+        .desktop-icon:hover {
+            background: rgba(176, 38, 255, 0.1);
+            border-color: var(--primary);
+        }
+
+        .icon-img {
+            font-size: 2rem;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .icon-label {
+            font-size: 0.8rem;
+            text-shadow: 1px 1px 2px #000;
+        }
+
+        /* Taskbar */
+        #taskbar {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 50px;
+            background: rgba(10, 10, 10, 0.95);
+            border-top: 1px solid var(--dim);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            z-index: 1000;
+        }
+
+        #start-btn {
+            background: var(--primary);
+            color: #000;
+            border: none;
+            padding: 5px 15px;
+            font-weight: bold;
+            font-family: var(--font-main);
+            cursor: pointer;
+            margin-right: 20px;
+        }
+
+        #start-btn:hover { background: var(--secondary); }
+
+        .task-item {
+            padding: 5px 15px;
+            background: #222;
+            margin-right: 5px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        /* Windows */
+        .window {
+            position: absolute;
+            background: var(--term-bg);
+            border: 1px solid var(--dim);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            min-width: 300px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            resize: both;
+            overflow: auto;
+        }
+
+        .window-header {
+            background: #111;
+            padding: 5px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            border-bottom: 1px solid var(--dim);
+            user-select: none;
+        }
+
+        .window-title { font-size: 0.8rem; color: var(--secondary); }
+        
+        .close-btn {
+            color: #ff4444;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .window-content {
+            flex: 1;
+            padding: 10px;
+            overflow: auto;
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+
+        /* Terminal Specifics */
+        .terminal-input-line { display: flex; }
+        .prompt { color: var(--primary); margin-right: 8px; }
+        #term-input {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-family: var(--font-main);
+            flex: 1;
+            outline: none;
+        }
+
+        /* Animations */
+        @keyframes flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+            20%, 24%, 55% { opacity: 0.4; }
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- Boot Screen -->
+    <div id="boot-screen">
+        <div class="boot-logo">HAUNT OS</div>
+        <div class="boot-log" id="boot-log"></div>
+    </div>
+
+    <!-- Desktop -->
+    <div id="desktop">
+        <div id="top-bar">
+            <div class="user-info">GHOST_USER@HAUNT-SYS</div>
+            <div class="clock" id="clock">00:00</div>
+        </div>
+
+        <div id="icons-area">
+            <!-- Icons generated by JS -->
+        </div>
+
+        <div id="taskbar">
+            <button id="start-btn">START</button>
+            <div id="task-list" style="display:flex;"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- System Core ---
+        const SYSTEM = {
+            version: '1.0.0-alpha',
+            user: 'GHOST',
+            hostname: 'HAUNT-SYS',
+            fs: {
+                '/': ['home', 'bin', 'etc', 'readme.txt'],
+                '/home': ['user', 'secrets'],
+                '/home/user': ['notes.txt', 'project_haunt.js'],
+                '/bin': ['help', 'clear', 'echo', 'ls', 'cat', 'reboot']
+            },
+            files: {
+                '/readme.txt': 'Добро пожаловать в HAUNT OS.\nСистема создана ИИ специально для тебя.',
+                '/home/user/notes.txt': 'План захвата мира:\n1. Выпить кофе\n2. Написать код\n3. ???\n4. PROFIT',
+                '/home/user/project_haunt.js': 'console.log("Hello World");\n// TODO: Сделать систему умнее'
+            }
+        };
+
+        // --- Boot Logic ---
+        const bootLog = document.getElementById('boot-log');
+        const bootMessages = [
+            "Initializing kernel...",
+            "Loading memory modules...",
+            "Mounting virtual file system...",
+            "Starting ghost services...",
+            "Bypassing security protocols...",
+            "System ready."
+        ];
+
+        let msgIndex = 0;
+        function runBoot() {
+            if (msgIndex < bootMessages.length) {
+                const p = document.createElement('div');
+                p.textContent = `> ${bootMessages[msgIndex]}`;
+                bootLog.appendChild(p);
+                msgIndex++;
+                setTimeout(runBoot, Math.random() * 400 + 100);
+            } else {
+                setTimeout(() => {
+                    document.getElementById('boot-screen').style.display = 'none';
+                    document.getElementById('desktop').style.display = 'block';
+                    initDesktop();
+                }, 800);
+            }
+        }
+
+        // --- Desktop Logic ---
+        const apps = [
+            { id: 'term', name: 'Terminal', icon: '💀', action: openTerminal },
+            { id: 'notes', name: 'Notes', icon: '📝', action: openNotes },
+            { id: 'about', name: 'About', icon: 'ℹ️', action: openAbout },
+            { id: 'calc', name: 'Calc', icon: '🧮', action: openCalc }
+        ];
+
+        function initDesktop() {
+            const iconsArea = document.getElementById('icons-area');
+            apps.forEach(app => {
+                const div = document.createElement('div');
+                div.className = 'desktop-icon';
+                div.innerHTML = `<span class="icon-img">${app.icon}</span><span class="icon-label">${app.name}</span>`;
+                div.ondblclick = app.action;
+                iconsArea.appendChild(div);
+            });
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString();
+        }
+
+        // --- Window Manager ---
+        let zIndexCounter = 100;
+
+        function createWindow(title, contentHTML, width = '400px', height = '300px') {
+            const win = document.createElement('div');
+            win.className = 'window';
+            win.style.width = width;
+            win.style.height = height;
+            win.style.top = '50px';
+            win.style.left = '50px';
+            win.style.zIndex = ++zIndexCounter;
+            
+            win.innerHTML = `
+                <div class="window-header">
+                    <span class="window-title">${title}</span>
+                    <span class="close-btn">[X]</span>
+                </div>
+                <div class="window-content">${contentHTML}</div>
+            `;
+
+            document.getElementById('desktop').appendChild(win);
+            addTaskbarItem(title, win);
+
+            // Drag Logic
+            const header = win.querySelector('.window-header');
+            const closeBtn = win.querySelector('.close-btn');
+            
+            let isDragging = false;
+            let offsetX, offsetY;
+
+            header.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                offsetX = e.clientX - win.offsetLeft;
+                offsetY = e.clientY - win.offsetTop;
+                win.style.zIndex = ++zIndexCounter;
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    win.style.left = `${e.clientX - offsetX}px`;
+                    win.style.top = `${e.clientY - offsetY}px`;
+                }
+            });
+
+            document.addEventListener('mouseup', () => isDragging = false);
+
+            closeBtn.addEventListener('click', () => {
+                win.remove();
+                removeTaskbarItem(win);
+            });
+
+            win.addEventListener('mousedown', () => {
+                win.style.zIndex = ++zIndexCounter;
+            });
+
+            return win.querySelector('.window-content');
+        }
+
+        function addTaskbarItem(title, winRef) {
+            const taskList = document.getElementById('task-list');
+            const item = document.createElement('div');
+            item.className = 'task-item';
+            item.textContent = title;
+            item.onclick = () => {
+                if (winRef.style.display === 'none') {
+                    winRef.style.display = 'flex';
+                    winRef.style.zIndex = ++zIndexCounter;
+                } else {
+                    winRef.style.zIndex = ++zIndexCounter;
+                }
+            };
+            taskList.appendChild(item);
+            
+            // Store ref to remove later
+            winRef.dataset.taskId = item.textContent;
+            item.dataset.winRef = winRef; 
+        }
+
+        function removeTaskbarItem(winRef) {
+            const items = document.querySelectorAll('.task-item');
+            items.forEach(item => {
+                if (item.textContent === winRef.querySelector('.window-title').textContent) {
+                    item.remove();
+                }
+            });
+        }
+
+        // --- Applications ---
+
+        function openTerminal() {
+            const content = `
+                <div id="term-output">HAUNT OS Shell v1.0<br>Type 'help' for commands.<br><br></div>
+                <div class="terminal-input-line">
+                    <span class="prompt">ghost@haunt:~$</span>
+                    <input type="text" id="term-input" autocomplete="off" autofocus>
+                </div>
+            `;
+            const container = createWindow('Terminal', content);
+            const input = container.querySelector('#term-input');
+            const output = container.querySelector('#term-output');
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const cmd = input.value.trim();
+                    output.innerHTML += `<div><span class="prompt">ghost@haunt:~$</span> ${cmd}</div>`;
+                    processCommand(cmd, output);
+                    input.value = '';
+                    container.scrollTop = container.scrollHeight;
+                }
+            });
+            
+            // Keep focus
+            container.addEventListener('click', () => input.focus());
+        }
+
+        function processCommand(cmd, output) {
+            const args = cmd.split(' ');
+            const command = args[0].toLowerCase();
+            let response = '';
+
+            switch(command) {
+                case 'help':
+                    response = 'Available commands: help, clear, ls, cat, echo, whoami, reboot, date';
+                    break;
+                case 'clear':
+                    output.innerHTML = '';
+                    return;
+                case 'ls':
+                    response = 'home  bin  etc  readme.txt';
+                    break;
+                case 'whoami':
+                    response = SYSTEM.user;
+                    break;
+                case 'date':
+                    response = new Date().toString();
+                    break;
+                case 'echo':
+                    response = args.slice(1).join(' ');
+                    break;
+                case 'cat':
+                    if(args[1] === 'readme.txt') response = SYSTEM.files['/readme.txt'];
+                    else if(args[1]) response = `File not found: ${args[1]}`;
+                    else response = "Usage: cat [filename]";
+                    break;
+                case 'reboot':
+                    location.reload();
+                    return;
+                case '':
+                    return;
+                default:
+                    response = `Command not found: ${command}`;
+            }
+            output.innerHTML += `<div style="color: var(--secondary)">${response}</div><br>`;
+        }
+
+        function openNotes() {
+            const content = `
+                <textarea style="width:100%; height:100%; background:#111; color:#0f0; border:none; resize:none; font-family:inherit; padding:10px;">${SYSTEM.files['/home/user/notes.txt']}</textarea>
+            `;
+            createWindow('Notes', content);
+        }
+
+        function openAbout() {
+            const content = `
+                <h3 style="color:var(--primary)">HAUNT OS</h3>
+                <p>Version: ${SYSTEM.version}</p>
+                <p>Kernel: WebKit-based Ghost Kernel</p>
+                <p>Created by: AI Assistant</p>
+                <p style="margin-top:20px; font-size:0.8rem; color:#666;">"Система, которая живет своей жизнью."</p>
+            `;
+            createWindow('About System', content, '300px', '250px');
+        }
+
+        function openCalc() {
+            const content = `
+                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; height:100%;">
+                    <input id="calc-display" style="grid-column: span 4; background:#222; color:#fff; border:none; text-align:right; padding:10px; font-size:1.2rem;" readonly value="0">
+                    <button onclick="calcInput('7')" style="background:#333; color:#fff; border:none;">7</button>
+                    <button onclick="calcInput('8')" style="background:#333; color:#fff; border:none;">8</button>
+                    <button onclick="calcInput('9')" style="background:#333; color:#fff; border:none;">9</button>
+                    <button onclick="calcInput('/')" style="background:var(--primary); color:#000; border:none;">/</button>
+                    <button onclick="calcInput('4')" style="background:#333; color:#fff; border:none;">4</button>
+                    <button onclick="calcInput('5')" style="background:#333; color:#fff; border:none;">5</button>
+                    <button onclick="calcInput('6')" style="background:#333; color:#fff; border:none;">6</button>
+                    <button onclick="calcInput('*')" style="background:var(--primary); color:#000; border:none;">*</button>
+                    <button onclick="calcInput('1')" style="background:#333; color:#fff; border:none;">1</button>
+                    <button onclick="calcInput('2')" style="background:#333; color:#fff; border:none;">2</button>
+                    <button onclick="calcInput('3')" style="background:#333; color:#fff; border:none;">3</button>
+                    <button onclick="calcInput('-')" style="background:var(--primary); color:#000; border:none;">-</button>
+                    <button onclick="calcInput('0')" style="background:#333; color:#fff; border:none;">0</button>
+                    <button onclick="calcClear()" style="background:#555; color:#fff; border:none;">C</button>
+                    <button onclick="calcResult()" style="background:var(--secondary); color:#000; border:none;">=</button>
+                    <button onclick="calcInput('+')" style="background:var(--primary); color:#000; border:none;">+</button>
+                </div>
+            `;
+            createWindow('Calculator', content, '250px', '300px');
+        }
+
+        // Global Calc Functions
+        window.calcInput = (val) => {
+            const d = document.activeElement.closest('.window-content').querySelector('#calc-display');
+            if(d.value === '0') d.value = val;
+            else d.value += val;
+        };
+        window.calcClear = () => {
+            const d = document.activeElement.closest('.window-content').querySelector('#calc-display');
+            d.value = '0';
+        };
+        window.calcResult = () => {
+            const d = document.activeElement.closest('.window-content').querySelector('#calc-display');
+            try { d.value = eval(d.value); } catch(e) { d.value = 'Error'; }
+        };
+
+        // Start Boot
+        window.onload = runBoot;
+
+    </script>
+</body>
+</html>
