@@ -1,22 +1,15 @@
 ```
-# Build artifacts
+# Build artifacts and binaries
+*.bin
+*.iso
 build/
 dist/
+myos_build/
 
-# Compiled files
-*.o
-*.obj
-*.out
+# OS-specific files
+.DS_Store
+Thumbs.db
 
-# Logs and temp files
+# Logs
 *.log
-*.tmp
-
-# Editors
-.vscode/
-.idea/
-
-# Environment
-.env
-.env.local
 ```
