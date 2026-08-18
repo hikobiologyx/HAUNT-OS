@@ -1,12 +1,17 @@
 ```
-# OS build artifacts
-*.iso
+# Compiled and build artifacts
 *.bin
+*.iso
+*.o
+boot.bin
+haunt_os/boot.bin
+haunt_os/kernel.o
+haunt_os_boot.bin
 
 # Build directories
-build/
-dist/
+haunt_os/isodir/
+haunt_os/haunt_os_final/
 
-# Temporary files
+# Temporary and intermediate files
 *.tmp
 ```
