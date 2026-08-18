@@ -1,12 +1,6 @@
-```
-# OS build artifacts
-*.iso
-*.bin
-
 # Build directories
 build/
 dist/
 
 # Temporary files
 *.tmp
-```
